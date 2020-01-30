@@ -1,0 +1,38 @@
+{
+  "manifest_version": 2,
+  "name": "VocMem",
+  "version": "1.0",
+  "description": "An small app to help you remember new words.",
+
+  "icons": {
+    "48": "icons/icon.png"
+  },
+
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["vocmem.js"]
+    }
+  ],
+
+  "permissions": [
+    "<all_urls>",
+  	"menus",
+	"webRequest",
+	"storage",
+	"downloads",
+	"downloads.open"
+  ],
+
+  "background": {
+    "scripts": ["background-script.js"]
+  },
+
+  "applications": {
+      "gecko": {
+          "id": "vocmem@example_domain.com",
+          "strict_min_version": "57.0a1"
+      }
+  }
+
+}
