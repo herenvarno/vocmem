@@ -39,12 +39,6 @@ function findAndReplace(searchText, replacement, searchNode) {
 
 function inject_css (){
 
-  var link = document.createElement('link');
-  link.type = 'text/css';
-  link.rel = 'stylesheet';
-  document.head.appendChild(link);
-  link.href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css";
-
   var style = document.createElement('style');
   style.innerHTML = `
 
@@ -56,7 +50,7 @@ function inject_css (){
 
 .vocmem_tooltip .vocmem_tooltiptext {
   visibility: hidden;
-  width: 120px;
+  min-width: 120px;
   background-color: #555;
   color: #fff;
   text-align: center;
@@ -87,33 +81,32 @@ function inject_css (){
   opacity: 1;
 }
 
-#vocmem_console label {
-  margin: 2px;
-}
 
-#vocmem_console input[type=text], select, textarea {
-  margin: 2px;
-  width: 160px;
-  padding: 12px;
-  border: 1px solid #ccc;
-  resize: vertical;
+
+#vocmem_console input[type=text]{
+  width: 170px;
+  height: 42px;
+  padding: 4px;
   box-sizing: border-box;
+  border: 1px solid #ccc;
+  font: 12px "Fira Sans", sans-serif;
 }
 #vocmem_console button {
-  margin: 2px;
-  width: 46%;
+  margin: 2px 0px;
+  width: 47%;
   background-color: #4CAF50;
   color: white;
-  padding: 12px 20px;
+  padding: 8px 20px;
   border: none;
   cursor: pointer;
+  font: 12px "Fira Sans", sans-serif;
 }
 #vocmem_console button:hover {
   background-color: #45a049;
 }
 #vocmem_console {
+  font: 12px "Fira Sans", sans-serif;
   display:none;
-  font-size: 12px;
   z-index: 100;
   width: 250px;
   border-top-left-radius: 5px;
@@ -127,6 +120,13 @@ function inject_css (){
   -webkit-transform: translateY(-50%);
   -ms-transform: translateY(-50%);
   transform: translateY(-50%);
+  border-left: 1px solid #4CAF50;
+  border-top: 1px solid #4CAF50;
+  border-bottom: 1px solid #4CAF50;
+}
+#vocmem_console row {
+  margin: 2px;
+  padding: 2px;
 }
 #vocmem_console .row:after {
   content: "";
@@ -135,16 +135,35 @@ function inject_css (){
   box-sizing: border-box;
 }
 #vocmem_console .icon{
+  width: 33px;
+  height: 42px;
+  padding: 12px;
+  border: 1px solid #ccc;
+
   right: 50px;
   margin-left: -2px;
-  padding: 10px;
   background: #4CAF50;
   color: white;
-  min-width: 30px;
   text-align: center;
-  resize: vertical;
-  padding: 15px 10px;
-  width: 40px;
+  font: 12px "Fira Sans", sans-serif;
+}
+#vocmem_trigger{
+  z-index: 100;
+  position: fixed;
+  top: 50%;
+  right: 0;
+  width: 20px;
+  height: 40px;
+  background: #4CAF50;
+  color: white;
+  text-align: center;
+  font: 12px "Fira Sans", sans-serif;
+  padding: 0px;
+  margin: 0px;
+  border: none;
+}
+#vocmem_trigger:hover {
+  background-color: #45a049;
 }
   `;
   document.head.appendChild(style);
@@ -152,6 +171,9 @@ function inject_css (){
 var modal_dialog = document.createElement('div');
   modal_dialog.innerHTML = `
   <div>
+      <button id="vocmem_trigger" class="trigger">《</button>
+  </div>
+  <div id="vocmem_console">
   <div class="row">
       <label>VocMem: <span id="dict" style="color:red">0</span> word(s) loaded!</label>
   </div>
@@ -171,18 +193,14 @@ var modal_dialog = document.createElement('div');
   </div>
   </div>
 `
-modal_dialog.id="vocmem_console";
 document.body.appendChild(modal_dialog);
 
 }
 
-
-//alert("aaaaaaaa");
-
 inject_css();
 
 var dictionary = {};
-var counter=Math.random();
+var config = {"source": "SV", "target": "EN"};
 
 const _translate = {
 
@@ -313,7 +331,7 @@ function delete_word(){
 function fill_trans(){
 	var text=document.getElementById("word").value;
 	if(text){
-		_translate.translateText(text, "en", "sv").then(function(data){
+		_translate.translateText(text, config["target"], config["source"]).then(function(data){
 		  document.getElementById("trans").value=data.text;
 		});
 	}
@@ -333,24 +351,41 @@ function fill_word(){
 }
 
 
+function show_hide_console()
+{
+	var foo = document.getElementById('vocmem_console');
+	if(foo.style.display == '' || foo.style.display == 'none'){
+		foo.style.display = 'block';
+		document.getElementById('vocmem_trigger').style.right="250px";
+		document.getElementById('vocmem_trigger').innerHTML="》";
+	}
+	else {
+		foo.style.display = 'none';
+		document.getElementById('vocmem_trigger').style.right="0px";
+		document.getElementById('vocmem_trigger').innerHTML="《";
+	}
 
+}
 
-document.onload = load_dict;
+function restoreOptions() {
+  function set_option(result) {
+    config = result.config || {"source": "SV", "target": "EN"};
+  }
+
+  function onError(error) {
+    console.log(`Error: ${error}`);
+  }
+
+  let getting = browser.storage.sync.get("config");
+  getting.then(set_option, onError);
+}
+
+window.addEventListener("load", restoreOptions);
 document.getElementById("save").addEventListener("click", save_dict);
 document.getElementById("change").addEventListener("click", change_dict);
 document.getElementById("load").addEventListener("click", load_dict);
 document.getElementById("delete").addEventListener("click", delete_word);
 document.getElementById("btn_copy").addEventListener("click", fill_word);
 document.getElementById("btn_search").addEventListener("click", fill_trans);
-
-let myPort = browser.runtime.connect({name:"port-from-cs"});
-myPort.onMessage.addListener(function(m) {
-    var foo = document.getElementById('vocmem_console');
-   if(foo.style.display == '' || foo.style.display == 'none'){
-        foo.style.display = 'block';
-   }
-   else {
-        foo.style.display = 'none';
-   }
-});
+document.getElementById("vocmem_trigger").addEventListener("click", show_hide_console);
 
